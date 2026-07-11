@@ -47,6 +47,8 @@ spec:
                 nullable: true
                 type: string
               challenges:
+                default:
+                - S256
                 description: Allowed PKCE challenge methods (e.g. `["S256"]`).
                 items:
                   type: string
@@ -82,7 +84,6 @@ spec:
               flows_enabled:
                 default:
                 - authorization_code
-                - refresh_token
                 description: |-
                   Enabled OAuth2/OIDC grant flows.
                   Valid values: `authorization_code`, `client_credentials`, `refresh_token`,
