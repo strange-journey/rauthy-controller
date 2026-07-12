@@ -7,15 +7,12 @@ metadata:
 spec:
   group: rauthy.io
   names:
-    categories: []
     kind: OIDCClient
     plural: oidcclients
-    shortNames: []
     singular: oidcclient
   scope: Namespaced
   versions:
-  - additionalPrinterColumns: []
-    name: v1alpha1
+  - name: v1alpha1
     schema:
       openAPIV3Schema:
         description: Auto-generated derived type for OIDCClientSpec via `CustomResource`
@@ -152,7 +149,8 @@ spec:
                   This optionally allows graceful secret rotation and keeps the current Rauthy secret cached in-memory.
                   A value of 1-24 hours is allowed here.
                 format: uint32
-                minimum: 0.0
+                maximum: 24.0
+                minimum: 1.0
                 nullable: true
                 type: integer
               secret_name:
