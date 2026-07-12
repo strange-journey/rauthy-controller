@@ -2,6 +2,19 @@ apiVersion: v1
 entries:
   rauthy-controller:
   - apiVersion: v2
+    appVersion: v0.1.5
+    created: "2026-07-12T03:46:44.441686481Z"
+    description: Kubernetes controller for managing Rauthy OIDC clients as CRDs
+    digest: 24ecd11c04dc3803141acb470438bb64d5899b7fcacee24d6ffc5deaad88db46
+    home: https://github.com/strange-journey/rauthy-controller
+    name: rauthy-controller
+    sources:
+    - https://github.com/strange-journey/rauthy-controller
+    type: application
+    urls:
+    - https://github.com/strange-journey/rauthy-controller/releases/download/rauthy-controller-0.1.5/rauthy-controller-0.1.5.tgz
+    version: 0.1.5
+  - apiVersion: v2
     appVersion: v0.1.4
     created: "2026-07-12T00:55:20.272489025Z"
     description: Kubernetes controller for managing Rauthy OIDC clients as CRDs
@@ -68,6 +81,19 @@ entries:
     version: 0.1.0
   rauthy-controller-crds:
   - apiVersion: v2
+    appVersion: v0.1.5
+    created: "2026-07-12T03:46:44.551520399Z"
+    description: CustomResourceDefinitions for rauthy-controller
+    digest: 651f26d36c0db9669392e67b47f5dd02661b6c66a83d1aad12dcb23a314129be
+    home: https://github.com/strange-journey/rauthy-controller
+    name: rauthy-controller-crds
+    sources:
+    - https://github.com/strange-journey/rauthy-controller
+    type: application
+    urls:
+    - https://github.com/strange-journey/rauthy-controller/releases/download/rauthy-controller-crds-0.1.5/rauthy-controller-crds-0.1.5.tgz
+    version: 0.1.5
+  - apiVersion: v2
     appVersion: v0.1.4
     created: "2026-07-12T00:55:20.392661142Z"
     description: CustomResourceDefinitions for rauthy-controller
@@ -132,4 +158,4 @@ entries:
     urls:
     - https://github.com/strange-journey/rauthy-controller/releases/download/rauthy-controller-crds-0.1.0/rauthy-controller-crds-0.1.0.tgz
     version: 0.1.0
-generated: "2026-07-12T00:55:20.392687301Z"
+generated: "2026-07-12T03:46:44.551619182Z"
