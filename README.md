@@ -17,7 +17,7 @@ Kubernetes `Secret` containing the client ID and client secret for confidential 
 helm install \
     rauthy-controller-crds rauthy-controller-crds \
     --repo https://strange-journey.github.io/rauthy-controller \
-    --version 0.1.4
+    --version 0.1.5
 ```
 
 **2. Create a Secret** with your Rauthy credentials:
@@ -36,7 +36,7 @@ The Rauthy API key must be configured with at least **CRUD access to Clients and
 helm install \
     rauthy-controller rauthy-controller \
     --repo https://strange-journey.github.io/rauthy-controller \
-    --version 0.1.4 \
+    --version 0.1.5 \
     --namespace rauthy --create-namespace \
     --set rauthy.existingSecret=rauthy-api-secret
 ```
