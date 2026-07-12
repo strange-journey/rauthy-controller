@@ -119,9 +119,13 @@ pub struct OIDCClientSpec {
     /// If `confidential` is true, the controller will create and maintain a
     /// Kubernetes Secret with this name in the same namespace.
     /// Defaults to `{client_id}-oidc-secret` when not set.
-    /// The Secret will contain `client_id` and `client_secret` keys.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub secret_name: Option<String>,
+
+    /// Optional names for the client ID and client secret data keys.
+    /// Both default to `client_id` and `client_secret`, respectively.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub secret_keys: Option<OIDCClientSecretKeys>,
 
     /// Number of hours for which the existing client secret should be cached by the controller.
     /// This optionally allows graceful secret rotation and keeps the current Rauthy secret cached in-memory.
@@ -146,8 +150,68 @@ pub struct OIDCClientLogo {
     pub mediatype: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct OIDCClientSecretKeys {
+    /// Data key for the client ID. Defaults to `client_id`.
+    #[serde(default = "default_client_id_secret_key")]
+    #[schemars(length(min = 1, max = 253), regex(pattern = r"^[-._a-zA-Z0-9]+$"))]
+    pub client_id: String,
+
+    /// Data key for the client secret. Defaults to `client_secret`.
+    #[serde(default = "default_client_secret_secret_key")]
+    #[schemars(length(min = 1, max = 253), regex(pattern = r"^[-._a-zA-Z0-9]+$"))]
+    pub client_secret: String,
+}
+
+impl Default for OIDCClientSecretKeys {
+    fn default() -> Self {
+        Self {
+            client_id: default_client_id_secret_key(),
+            client_secret: default_client_secret_secret_key(),
+        }
+    }
+}
+
+impl OIDCClientSecretKeys {
+    fn validate(&self) -> Result<()> {
+        if !is_valid_secret_data_key(&self.client_id)
+            || !is_valid_secret_data_key(&self.client_secret)
+        {
+            return Err(Error::ConfigError(
+                "spec.secret_keys values must be 1-253 characters of letters, numbers, '.', '-', or '_'"
+                    .to_string(),
+            ));
+        }
+
+        if self.client_id == self.client_secret {
+            return Err(Error::ConfigError(
+                "spec.secret_keys.client_id and spec.secret_keys.client_secret must differ"
+                    .to_string(),
+            ));
+        }
+
+        Ok(())
+    }
+}
+
+fn is_valid_secret_data_key(value: &str) -> bool {
+    !value.is_empty()
+        && value.len() <= 253
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'-' | b'_'))
+}
+
 fn default_true() -> bool {
     true
+}
+
+fn default_client_id_secret_key() -> String {
+    "client_id".to_string()
+}
+
+fn default_client_secret_secret_key() -> String {
+    "client_secret".to_string()
 }
 
 fn default_flows() -> Vec<String> {
@@ -191,6 +255,11 @@ impl OIDCClientSpec {
                 .unwrap_or_else(|| format!("{}-oidc-secret", self.client_id))
         })
     }
+
+    pub fn resolve_secret_keys(&self) -> OIDCClientSecretKeys {
+        self.secret_keys.clone().unwrap_or_default()
+    }
+
     pub fn to_rauthy_new_client_request(&self) -> crate::rauthy::NewClientRequest {
         crate::rauthy::NewClientRequest {
             id: self.client_id.clone(),
@@ -522,6 +591,8 @@ impl OIDCClient {
 
         let client_id = &self.spec.client_id;
         let client_id_bytes = ByteString(client_id.clone().into_bytes());
+        let secret_keys = self.spec.resolve_secret_keys();
+        secret_keys.validate()?;
 
         let client_secret_bytes = if let Some(current_secret) =
             secrets.get_opt(&secret_name).await?
@@ -530,8 +601,8 @@ impl OIDCClient {
                 ByteString(ctx.rauthy.get_client_secret(client_id).await?.into_bytes());
 
             if current_secret.data.is_some_and(|data| {
-                data.get("client_id") == Some(&client_id_bytes)
-                    && data.get("client_secret") == Some(&client_secret_bytes)
+                data.get(&secret_keys.client_id) == Some(&client_id_bytes)
+                    && data.get(&secret_keys.client_secret) == Some(&client_secret_bytes)
             }) {
                 // if Secret exists and matches, no apply is necessary
                 return Ok(());
@@ -580,8 +651,8 @@ impl OIDCClient {
                 ..ObjectMeta::default()
             },
             data: Some(BTreeMap::from([
-                ("client_id".to_string(), client_id_bytes),
-                ("client_secret".to_string(), client_secret_bytes),
+                (secret_keys.client_id, client_id_bytes),
+                (secret_keys.client_secret, client_secret_bytes),
             ])),
             ..Secret::default()
         };
