@@ -127,6 +127,7 @@ pub struct OIDCClientSpec {
     /// This optionally allows graceful secret rotation and keeps the current Rauthy secret cached in-memory.
     /// A value of 1-24 hours is allowed here.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(range(min = 1, max = 24))]
     pub secret_cache_current_hours: Option<u32>,
 
     /// An optional base64-encoded logo for the client, set in a base64data field with a mediatype.
@@ -409,9 +410,15 @@ impl OIDCClient {
             return Err(e);
         }
 
-        if let Some(logo) = &self.spec.logo {
-            info!(client_id = %client_id, "updating client logo");
-            ctx.rauthy.update_client_logo(client_id, logo).await?;
+        match &self.spec.logo {
+            Some(logo) => {
+                info!(client_id = %client_id, "updating client logo");
+                ctx.rauthy.update_client_logo(client_id, logo).await?;
+            }
+            None => {
+                info!(client_id = %client_id, "deleting client logo");
+                ctx.rauthy.delete_client_logo(client_id).await?;
+            }
         }
 
         if self.spec.confidential {
@@ -460,6 +467,29 @@ impl OIDCClient {
                 self.metadata.generation.unwrap_or(1),
             );
             status.secret_name = self.spec.resolve_secret_name();
+        } else if let Some(secret_name) = status.secret_name.take() {
+            let secrets: Api<Secret> = Api::namespaced(ctx.client.clone(), &ns);
+
+            info!(
+                client_id = %client_id,
+                secret_name = %secret_name,
+                "deleting Secret because client is no longer confidential"
+            );
+
+            match secrets.delete(&secret_name, &DeleteParams::default()).await {
+                Ok(_) => {}
+                Err(kube::Error::Api(err)) if err.code == 404 => {}
+                Err(e) => return Err(Error::KubeError(e)),
+            }
+
+            set_condition(
+                &mut status.conditions,
+                CONDITION_SECRET_READY,
+                "True",
+                "NotRequired",
+                "Client is not confidential; no Secret is required",
+                self.metadata.generation.unwrap_or(1),
+            );
         }
 
         set_condition(

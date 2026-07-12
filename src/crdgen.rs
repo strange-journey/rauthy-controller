@@ -3,10 +3,22 @@ use rauthy_controller::controller;
 
 fn main() {
     let mut crd = controller::OIDCClient::crd();
-    if crd.spec.names.categories.as_ref().is_some_and(Vec::is_empty) {
+    if crd
+        .spec
+        .names
+        .categories
+        .as_ref()
+        .is_some_and(Vec::is_empty)
+    {
         crd.spec.names.categories = None;
     }
-    if crd.spec.names.short_names.as_ref().is_some_and(Vec::is_empty) {
+    if crd
+        .spec
+        .names
+        .short_names
+        .as_ref()
+        .is_some_and(Vec::is_empty)
+    {
         crd.spec.names.short_names = None;
     }
     for version in &mut crd.spec.versions {
