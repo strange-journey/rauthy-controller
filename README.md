@@ -5,7 +5,7 @@ as native Kubernetes resources, built with [kube-rs](https://github.com/kube-rs/
 
 The `Controller` reconciles `OIDCClient` custom resources against a Rauthy instance using its REST API - creating,
 updating, and deleting OIDC clients in response to changes, and maintaining an immutable
-Kubernetes `Secret` containing the `client_id` and `client_secret` for confidential clients.
+Kubernetes `Secret` containing the client ID and client secret for confidential clients.
 
 ## Installation
 
@@ -77,7 +77,17 @@ kubectl apply -f examples/oidcclient.yaml
 The reconciler will create or update the corresponding OIDC client in Rauthy. For confidential
 clients, it will create an immutable `Secret` in the same namespace containing `client_id` and
 `client_secret`. The secret name defaults to `{client_id}-oidc-secret` and can be overridden
-with `.spec.secret_name`.
+with `.spec.secret_name`. Customize the data-key names with `.spec.secret_keys`; both keys
+default to the names shown above:
+
+```yaml
+spec:
+  secret_keys:
+    client_id: OIDC_CLIENT_ID
+    client_secret: OIDC_CLIENT_SECRET
+```
+
+Changing a key name recreates the immutable Secret.
 
 ```sh
 kubectl get oidcclients

@@ -153,12 +153,32 @@ spec:
                 minimum: 1.0
                 nullable: true
                 type: integer
+              secret_keys:
+                description: |-
+                  Optional names for the client ID and client secret data keys.
+                  Both default to `client_id` and `client_secret`, respectively.
+                nullable: true
+                properties:
+                  client_id:
+                    default: client_id
+                    description: Data key for the client ID. Defaults to `client_id`.
+                    maxLength: 253
+                    minLength: 1
+                    pattern: ^[-._a-zA-Z0-9]+$
+                    type: string
+                  client_secret:
+                    default: client_secret
+                    description: Data key for the client secret. Defaults to `client_secret`.
+                    maxLength: 253
+                    minLength: 1
+                    pattern: ^[-._a-zA-Z0-9]+$
+                    type: string
+                type: object
               secret_name:
                 description: |-
                   If `confidential` is true, the controller will create and maintain a
                   Kubernetes Secret with this name in the same namespace.
                   Defaults to `{client_id}-oidc-secret` when not set.
-                  The Secret will contain `client_id` and `client_secret` keys.
                 nullable: true
                 type: string
             required:

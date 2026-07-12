@@ -13,4 +13,7 @@ spec:
   allowed_origins:
     - https://example-webapp.local
   secret_name: example-webapp-oidc-secret-custom-name
+  secret_keys:
+    client_id: OIDC_CLIENT_ID
+    client_secret: OIDC_CLIENT_SECRET
   secret_cache_current_hours: 1
