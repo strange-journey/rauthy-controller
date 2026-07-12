@@ -106,7 +106,10 @@ pub struct OIDCClientSpec {
     pub default_scopes: Vec<String>,
 
     /// Allowed PKCE challenge methods (e.g. `["S256"]`).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default = "default_challenges",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub challenges: Option<Vec<String>>,
 
     /// OIDC backchannel logout URI.
@@ -147,10 +150,7 @@ fn default_true() -> bool {
 }
 
 fn default_flows() -> Vec<String> {
-    vec![
-        "authorization_code".to_string(),
-        "refresh_token".to_string(),
-    ]
+    vec!["authorization_code".to_string()]
 }
 
 fn default_alg() -> String {
@@ -176,6 +176,10 @@ fn default_scopes() -> Vec<String> {
 
 fn default_default_scopes() -> Vec<String> {
     vec!["openid".to_string()]
+}
+
+fn default_challenges() -> Option<Vec<String>> {
+    Some(vec!["S256".to_string()])
 }
 
 impl OIDCClientSpec {

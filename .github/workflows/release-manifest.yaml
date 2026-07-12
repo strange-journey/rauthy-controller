@@ -1,0 +1,50 @@
+name: Attach deployment manifest to release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup helm
+        uses: azure/setup-helm@v5
+
+      - name: Render manifest
+        run: |
+          NAMESPACE=rauthy-controller
+
+          cat > rauthy-controller.yaml <<EOF
+          # rauthy-controller deployment manifest (${GITHUB_REF_NAME})
+          # Rendered from the Helm charts in this repository.
+          #
+          # Before applying, create a Secret named "rauthy-api-secret" in the
+          # ${NAMESPACE} namespace containing RAUTHY_URL and RAUTHY_API_KEY, or patch
+          # the Deployment's env to reference your own Secret.
+          ---
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: ${NAMESPACE}
+          EOF
+
+          helm template rauthy-controller-crds charts/rauthy-controller-crds \
+            --namespace "${NAMESPACE}" >> rauthy-controller.yaml
+
+          helm template rauthy-controller charts/rauthy-controller \
+            --namespace "${NAMESPACE}" \
+            --set rauthy.existingSecret=rauthy-api-secret \
+            --set image.tag="${GITHUB_REF_NAME}" >> rauthy-controller.yaml
+
+      - name: Attach manifest to release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: rauthy-controller.yaml
